@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="no">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+	    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+        <title>Registere oppdrag</title>
+    </head>
+    <body>
+        <header>
+            <a href="Wireframe.docx">Wireframe</a>
+        </header>
+        <h1>Register oppdrag</h1>
+       
+        <form id="skjema">
+            <label>Dato: </label><input type="date" id="inpDato" required>
+            <br>
+            <br>
+            <label>Namn: </label><input type="text" id="inpNamn" required>
+            <br>
+            <br>
+            <label>Telefonnummer: </label><input type="text" id="inpNummer" required>
+            <br>
+            <br>
+            <label>E-post: </label><input type="text" id="inpPost" required>
+            <br>
+            <br>
+            <label>Oppdragsbeskrivelse: </label><input type="text" id="inpOppdragsbeskrivelse" required>
+            <br>
+            <br>
+            <label>Last opp bilete: </label><input type="file" id="inpBilete" required>
+            <br>
+            <br>
+            <button type="submit">Register oppdrag</button>
+            <br>
+            <br>
+       </form>
+
+       <div>
+           <div id="main"></div>
+
+           <div id="overlay"></div>
+       </div>
+        
+
+        <script src="https://www.gstatic.com/firebasejs/8.6.3/firebase.js"></script>
+        <script>
+            const firebaseConfig = {
+            apiKey: "AIzaSyC-DWfkotjsA7YQ0iWvKIlLc9faRItAQfw",
+            authDomain: "registrere-oppdrag.firebaseapp.com",
+            databaseURL: "https://registrere-oppdrag-default-rtdb.firebaseio.com",
+            projectId: "registrere-oppdrag",
+            storageBucket: "registrere-oppdrag.appspot.com",
+            messagingSenderId: "323740984653",
+            appId: "1:323740984653:web:fe4344d5dd4584f0fc4304"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+
+        </script>
+        
+        <script>
+            //HTML-element
+            const inpDato = document.querySelector("#inpDato");
+            const inpNamn = document.querySelector("#inpNamn");
+            const inpNummer = document.querySelector("#inpNummer");
+            const inpPost = document.querySelector("#inpPost");
+            const inpOppdragsbeskrivelse = document.querySelector("#inpOppdragsbeskrivelse");
+            const inpBilete = document.querySelector("#inpBilete");
+
+            const skjema = document.querySelector("#skjema");
+            const overlay = document.querySelector("#overlay");
+            const main = document.querySelector("#main");
+
+            //Firebase
+            const database = firebase.database();
+            const storage = firebase.storage();
+
+            const registrer = database.ref("registrer");
+
+            //Funksjon som lagrer bilde i databse
+            function lagreBilde(evt){
+                evt.preventDefault();
+
+            //Viser overlay
+                overlay.style.display = "flex";
+
+            //Bilete som skal bli lasta opp
+                const bilde = inpBilete.files[0];
+
+            //Kvar skal me lagra bilete
+                const lagringsplass = storage.ref("bileter/" + ( +new Date()) + bilde.name);
+
+            //Vi laster opp bileter til storage
+            lagringsplass.put(bilde)
+            .then( bilde => bilde.ref.getDownloadURL() )
+            .then( url => {
+
+                registrer.push({ 
+                    url: url, 
+                    dato: inpDato.value,
+                    namn: inpNamn.value,
+                    nummer: inpNummer.value,
+                    post: inpPost.value,
+                    oppdragsbeskrivelse: inpOppdragsbeskrivelse.value
+                });
+
+                skjema.reset();
+                overlay.style.display = "none";
+                });
+            }
+
+                function visBilde(snap){
+                    const key = snap.key;
+                    const data = snap.val();
+
+                    main.innerHTML = `<article><img src="${data.url}"><p>${data.dato}<br>${data.namn}<br>${data.nummer}<br>${data.post}<br>${data.oppdragsbeskrivelse}</p></article>` + main.innerHTML;
+                }
+
+            //Event Listeners
+            skjema.addEventListener("submit", lagreBilde);
+            registrer.on("child_added", visBilde);
+
+        </script>
+    </body>
+</html>
